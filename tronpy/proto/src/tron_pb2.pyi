@@ -22,7 +22,15 @@ class TransferContract(_message.Message):
     amount: int
     def __init__(
         self, owner_address: _Optional[bytes] = ..., to_address: _Optional[bytes] = ..., amount: _Optional[int] = ...
-    ) -> None: ...
+    ) -> None: """
+        Initialize a TransferContract message with optional owner address, recipient address, and transfer amount.
+        
+        Parameters:
+            owner_address (bytes, optional): The address initiating the transfer.
+            to_address (bytes, optional): The address receiving the transfer.
+            amount (int, optional): The amount to transfer.
+        """
+        ...
 
 class TriggerSmartContract(_message.Message):
     __slots__ = ("owner_address", "contract_address", "call_value", "data", "call_token_value", "token_id")
@@ -46,7 +54,18 @@ class TriggerSmartContract(_message.Message):
         data: _Optional[bytes] = ...,
         call_token_value: _Optional[int] = ...,
         token_id: _Optional[int] = ...,
-    ) -> None: ...
+    ) -> None: """
+        Initialize a TriggerSmartContract message with optional owner address, contract address, call value, data payload, call token value, and token ID.
+        
+        Parameters:
+            owner_address (bytes, optional): Address of the transaction initiator.
+            contract_address (bytes, optional): Address of the smart contract to trigger.
+            call_value (int, optional): Amount of native token to transfer with the call.
+            data (bytes, optional): Input data or payload for the contract call.
+            call_token_value (int, optional): Amount of a specific token to transfer with the call.
+            token_id (int, optional): Identifier of the token to use in the call.
+        """
+        ...
 
 class AccountId(_message.Message):
     __slots__ = ("name", "address")
@@ -54,7 +73,14 @@ class AccountId(_message.Message):
     ADDRESS_FIELD_NUMBER: _ClassVar[int]
     name: bytes
     address: bytes
-    def __init__(self, name: _Optional[bytes] = ..., address: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, name: _Optional[bytes] = ..., address: _Optional[bytes] = ...) -> None: """
+Initialize an AccountId message with optional name and address fields.
+
+Parameters:
+    name (bytes, optional): The account's name.
+    address (bytes, optional): The account's address.
+"""
+...
 
 class authority(_message.Message):
     __slots__ = ("account", "permission_name")
@@ -64,7 +90,14 @@ class authority(_message.Message):
     permission_name: bytes
     def __init__(
         self, account: _Optional[_Union[AccountId, _Mapping]] = ..., permission_name: _Optional[bytes] = ...
-    ) -> None: ...
+    ) -> None: """
+        Initialize an authority message with an account and an optional permission name.
+        
+        Parameters:
+            account: An AccountId instance or a mapping representing the account associated with this authority.
+            permission_name: Optional permission name as bytes.
+        """
+        ...
 
 class MarketOrderDetail(_message.Message):
     __slots__ = ("makerOrderId", "takerOrderId", "fillSellQuantity", "fillBuyQuantity")
@@ -82,7 +115,16 @@ class MarketOrderDetail(_message.Message):
         takerOrderId: _Optional[bytes] = ...,
         fillSellQuantity: _Optional[int] = ...,
         fillBuyQuantity: _Optional[int] = ...,
-    ) -> None: ...
+    ) -> None: """
+        Initialize a MarketOrderDetail message with optional maker and taker order IDs and filled quantities.
+        
+        Parameters:
+            makerOrderId (bytes, optional): The unique identifier of the maker's order.
+            takerOrderId (bytes, optional): The unique identifier of the taker's order.
+            fillSellQuantity (int, optional): The quantity sold in the order fill.
+            fillBuyQuantity (int, optional): The quantity bought in the order fill.
+        """
+        ...
 
 class Transaction(_message.Message):
     __slots__ = ("raw_data", "signature", "ret")
@@ -192,7 +234,17 @@ class Transaction(_message.Message):
             provider: _Optional[bytes] = ...,
             ContractName: _Optional[bytes] = ...,
             Permission_id: _Optional[int] = ...,
-        ) -> None: ...
+        ) -> None: """
+            Initializes a Transaction.Contract message with optional contract type, parameters, provider, contract name, and permission ID.
+            
+            Parameters:
+                type: The type of contract, specified as a ContractType enum value or string.
+                parameter: The contract parameters, provided as a google.protobuf.Any message or a mapping.
+                provider: The address of the contract provider.
+                ContractName: The name of the contract.
+                Permission_id: The permission ID associated with the contract.
+            """
+            ...
 
     class Result(_message.Message):
         __slots__ = (
@@ -263,7 +315,14 @@ class Transaction(_message.Message):
             VALUE_FIELD_NUMBER: _ClassVar[int]
             key: str
             value: int
-            def __init__(self, key: _Optional[str] = ..., value: _Optional[int] = ...) -> None: ...
+            def __init__(self, key: _Optional[str] = ..., value: _Optional[int] = ...) -> None: """
+Initializes a CancelUnfreezeV2AmountEntry with an optional key and value.
+
+Parameters:
+    key (str, optional): The key for the cancel_unfreezeV2_amount map entry.
+    value (int, optional): The value associated with the key.
+"""
+...
 
         FEE_FIELD_NUMBER: _ClassVar[int]
         RET_FIELD_NUMBER: _ClassVar[int]
@@ -312,7 +371,27 @@ class Transaction(_message.Message):
             orderDetails: _Optional[_Iterable[_Union[MarketOrderDetail, _Mapping]]] = ...,
             withdraw_expire_amount: _Optional[int] = ...,
             cancel_unfreezeV2_amount: _Optional[_Mapping[str, int]] = ...,
-        ) -> None: ...
+        ) -> None: """
+            Initializes a Transaction.Result message with optional transaction result details.
+            
+            Parameters:
+                fee (int, optional): The transaction fee.
+                ret (Transaction.Result.code or str, optional): The transaction result code.
+                contractRet (Transaction.Result.contractResult or str, optional): The contract execution result.
+                assetIssueID (str, optional): The asset issue identifier.
+                withdraw_amount (int, optional): The withdrawn amount.
+                unfreeze_amount (int, optional): The amount that was unfrozen.
+                exchange_received_amount (int, optional): Amount received from an exchange.
+                exchange_inject_another_amount (int, optional): Amount injected into another exchange.
+                exchange_withdraw_another_amount (int, optional): Amount withdrawn from another exchange.
+                exchange_id (int, optional): The exchange identifier.
+                shielded_transaction_fee (int, optional): Fee for shielded transactions.
+                orderId (bytes, optional): Identifier for the order.
+                orderDetails (Iterable[MarketOrderDetail or Mapping], optional): Details of market orders filled by the transaction.
+                withdraw_expire_amount (int, optional): Amount withdrawn due to expiration.
+                cancel_unfreezeV2_amount (Mapping[str, int], optional): Mapping of cancel unfreeze V2 amounts by key.
+            """
+            ...
 
     class raw(_message.Message):
         __slots__ = (
@@ -359,7 +438,22 @@ class Transaction(_message.Message):
             scripts: _Optional[bytes] = ...,
             timestamp: _Optional[int] = ...,
             fee_limit: _Optional[int] = ...,
-        ) -> None: ...
+        ) -> None: """
+            Initializes a Transaction.raw message with optional block references, authorizations, contracts, and transaction metadata.
+            
+            Parameters:
+                ref_block_bytes (bytes, optional): Reference block bytes for transaction validation.
+                ref_block_num (int, optional): Reference block number for transaction validation.
+                ref_block_hash (bytes, optional): Reference block hash for transaction validation.
+                expiration (int, optional): Expiration timestamp for the transaction.
+                auths (Iterable[authority or Mapping], optional): List of authorization entries for the transaction.
+                data (bytes, optional): Arbitrary data payload for the transaction.
+                contract (Iterable[Transaction.Contract or Mapping], optional): List of contract messages included in the transaction.
+                scripts (bytes, optional): Scripts associated with the transaction.
+                timestamp (int, optional): Timestamp when the transaction was created.
+                fee_limit (int, optional): Maximum fee allowed for the transaction.
+            """
+            ...
 
     RAW_DATA_FIELD_NUMBER: _ClassVar[int]
     SIGNATURE_FIELD_NUMBER: _ClassVar[int]
@@ -372,4 +466,12 @@ class Transaction(_message.Message):
         raw_data: _Optional[_Union[Transaction.raw, _Mapping]] = ...,
         signature: _Optional[_Iterable[bytes]] = ...,
         ret: _Optional[_Iterable[_Union[Transaction.Result, _Mapping]]] = ...,
-    ) -> None: ...
+    ) -> None: """
+        Initializes a Transaction message with optional raw data, signatures, and results.
+        
+        Parameters:
+        	raw_data: Optional raw transaction data as a Transaction.raw instance or mapping.
+        	signature: Optional iterable of signature bytes.
+        	ret: Optional iterable of Transaction.Result instances or mappings representing transaction results.
+        """
+        ...

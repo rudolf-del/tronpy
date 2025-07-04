@@ -41,6 +41,13 @@ DEFAULT_CONF = {
 # noinspection PyBroadException
 class AsyncTransactionRet(dict):
     def __init__(self, iterable, client: "AsyncTron", method: AsyncContractMethod = None):
+        """
+        Initialize an AsyncTransactionRet instance with transaction data, associated client, and optional contract method.
+        
+        Parameters:
+            iterable: A dictionary or mapping containing transaction result data, including 'txid'.
+            method: The contract method associated with the transaction, if applicable.
+        """
         super().__init__(iterable)
 
         self._client = client
@@ -201,7 +208,11 @@ class AsyncTransaction:
         return current_timestamp() >= self._raw_data["expiration"]
 
     async def update(self):
-        """update Transaction, change ref_block and txID, remove all signature"""
+        """
+        Refreshes the transaction's reference block, timestamps, and transaction ID, and clears all signatures.
+        
+        This method updates the transaction to reference the latest solid block, resets its timestamp and expiration, clears all existing signatures, and recalculates the transaction ID and permission information.
+        """
         self._raw_data["timestamp"] = current_timestamp()
         self._raw_data["expiration"] = self._raw_data["timestamp"] + SIXTY_SECONDS
         ref_block_id = await self._client.get_latest_solid_block_id()
@@ -233,6 +244,13 @@ class AsyncTransactionBuilder:
     """TransactionBuilder, to build a :class:`~Transaction` object."""
 
     def __init__(self, inner: dict, client: "AsyncTron", method: AsyncContractMethod = None):
+        """
+        Initialize an asynchronous transaction builder with contract data, client, and optional contract method.
+        
+        Parameters:
+            inner (dict): The contract data dictionary to include in the transaction.
+            method (AsyncContractMethod, optional): The contract method associated with the transaction, if applicable.
+        """
         self._client = client
         self._raw_data = {
             "contract": [inner],
@@ -276,7 +294,12 @@ class AsyncTransactionBuilder:
         return self
 
     async def build(self, options=None, **kwargs) -> AsyncTransaction:
-        """Build the transaction."""
+        """
+        Asynchronously finalizes and constructs an `AsyncTransaction` using the latest solid block reference.
+        
+        Returns:
+            AsyncTransaction: The constructed transaction ready for signing or broadcasting.
+        """
         ref_block_id = await self._client.get_latest_solid_block_id()
         # last 2 byte of block number part
         self._raw_data["ref_block_bytes"] = get_ref_block_bytes(ref_block_id)
@@ -346,9 +369,25 @@ class AsyncTrx:
         trx_num: int = 1,
         num: int = 1,
     ) -> AsyncTransactionBuilder:
-        """Issue a TRC10 token.
-
-        Almost all parameters have resonable defaults.
+        """
+        Creates a builder for issuing a new TRC10 token with customizable parameters.
+        
+        Parameters:
+            owner (TAddress): The address that will own and issue the token.
+            abbr (str): The token abbreviation (symbol).
+            total_supply (int): The total supply of the token.
+            url (str): The URL associated with the token.
+            name (str, optional): The full name of the token. Defaults to the abbreviation if not provided.
+            description (str, optional): A description of the token.
+            start_time (int, optional): The start time (UNIX timestamp in ms) for the token's validity. Defaults to current time plus 60 seconds.
+            end_time (int, optional): The end time (UNIX timestamp in ms) for the token's validity. Defaults to current time plus 61 seconds.
+            precision (int, optional): The number of decimal places for the token. Defaults to 6.
+            frozen_supply (list, optional): List of frozen supply rules.
+            trx_num (int, optional): The minimum amount of TRX to be exchanged for the token. Defaults to 1.
+            num (int, optional): The number of tokens to be exchanged per minimum TRX. Defaults to 1.
+        
+        Returns:
+            AsyncTransactionBuilder: A builder object for further customization, signing, and broadcasting of the asset issuance transaction.
         """
         if name is None:
             name = abbr

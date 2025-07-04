@@ -40,6 +40,14 @@ DEFAULT_CONF = {
 
 class TransactionRet(dict):
     def __init__(self, iterable, client: "Tron", method: ContractMethod = None):
+        """
+        Initialize a TransactionRet instance with transaction data, client reference, and optional contract method.
+        
+        Parameters:
+            iterable: Transaction broadcast response data, typically a dictionary.
+            client (Tron): The Tron client instance associated with this transaction.
+            method (ContractMethod, optional): The contract method related to this transaction, if applicable.
+        """
         super().__init__(iterable)
 
         self._client = client
@@ -191,7 +199,11 @@ class Transaction:
         return current_timestamp() >= self._raw_data["expiration"]
 
     def update(self):
-        """update Transaction, change ref_block and txID, remove all signature"""
+        """
+        Refreshes the transaction's TAPoS fields, timestamp, and expiration, clears signatures, and recalculates the transaction ID and permissions.
+        
+        This method updates the transaction to reference the latest solid block, resets the timestamp and expiration, removes all existing signatures, and fetches updated signing weight and permission information from the client.
+        """
         self._raw_data["timestamp"] = current_timestamp()
         self._raw_data["expiration"] = self._raw_data["timestamp"] + SIXTY_SECONDS
         ref_block_id = self._client.get_latest_solid_block_id()
@@ -215,6 +227,9 @@ class Transaction:
         self._signature = []
 
     def __str__(self):
+        """
+        Return a formatted JSON string representation of the transaction.
+        """
         return json.dumps(self.to_json(), indent=2)
 
     @classmethod
@@ -225,70 +240,19 @@ class Transaction:
         amount: int,
         ref_block_id: str,
     ) -> "Transaction":
-        """Build an **unsigned** ``TransferContract`` transaction completely offline.
-
-        This helper constructs the JSON payload that TRON full-nodes expect for a
-        plain TRX transfer **without** talking to any node. It is therefore
-        suitable for air-gapped signing workflows.
-
-        Parameters
-        ----------
-        owner_address : str
-            Base58Check address of the sender.
-        to_address : str
-            Recipient address (Base58Check or hex).
-        amount : int
-            Amount of TRX to send, expressed in *SUN* (1 TRX = 1_000_000 SUN).
-        ref_block_id : str
-            Hex string of the *latest solid block id*. The TAPoS fields
-            (``ref_block_bytes``, ``ref_block_hash``, ``timestamp`` and
-            ``expiration``) are derived from this value. The caller must fetch
-            this block id from the network beforehand - typically via
-            ``client.get_latest_block()['blockID']``.
-
-        Returns
-        -------
-        Transaction
-            A `Transaction` instance whose ``raw_data.contract[0].type`` is
-            ``"TransferContract"``. Important characteristics of the returned
-            object:
-
-            * ``txid`` - SHA-256 hash of the serialized ``raw_data`` (already
-              computed for you).
-            * ``signature`` - an empty list. You still need to call
-              :py:meth:`Transaction.sign` *and* broadcast the transaction.
-            * ``permission`` - ``None``; set automatically once the transaction
-              is signed or broadcast.
-
-        Differences to other constructors
-        ----------------------------------
-        * :py:meth:`Transaction.from_json` - wraps an *existing* transaction
-          dictionary (e.g. one that was pulled from the chain). It performs **no
-          validation nor construction logic**.
-        * :pyclass:`Transaction.__init__` - the low-level constructor used
-          internally. You are responsible for providing *all* mandatory fields
-          correctly. Using :py:meth:`build_offline` is safer and less verbose.
-
-        Implementation details
-        ----------------------
-        The heavy lifting is delegated to
-        :pyfunc:`tronpy.proto.transaction.create_transaction_offline`, which
-        builds the underlying ``proto.Transaction`` message and converts it to
-        the dictionary representation that :pyclass:`Transaction` understands.
-
-        Examples
-        --------
-        >>> ref_block_id = client.get_latest_block()['blockID']
-        >>> tx = Transaction.build_offline(owner, recipient, 100_000_000, ref_block_id)
-        >>> tx.sign(private_key)
-        >>> client.broadcast(tx)
-
-        Further reading
-        ---------------
-        * TRON Developers - Building a Transaction Locally:
-          https://developers.tron.network/docs/create-offline-transactions-with-trident-and-tronweb#build-transaction
-        * TAPoS (Transaction And Proof-of-Stake) explanation:
-          https://developers.tron.network/docs/tron-protocol-transaction#tapos
+        """
+        Constructs an unsigned TRX transfer transaction offline for air-gapped signing.
+        
+        Builds a `TransferContract` transaction payload using only local data, without any network calls. The caller must supply the latest solid block ID to derive TAPoS fields. The resulting `Transaction` instance is unsigned and ready for signing and broadcasting.
+        
+        Parameters:
+            owner_address (str): Base58Check address of the sender.
+            to_address (str): Recipient address (Base58Check or hex).
+            amount (int): Amount of TRX to send, in SUN (1 TRX = 1,000,000 SUN).
+            ref_block_id (str): Hex string of the latest solid block ID, used to derive TAPoS fields.
+        
+        Returns:
+            Transaction: An unsigned `Transaction` object for a TRX transfer, with computed txid and empty signature list.
         """
         return cls.from_json(
             create_transaction_offline(
@@ -309,51 +273,21 @@ class Transaction:
         ref_block_id: str,
         fee_limit: int = DEFAULT_CONF["fee_limit"],
     ) -> "Transaction":
-        """Build an **unsigned** ``TriggerSmartContract`` transaction that calls the
-        TRC-20 standard ``transfer`` function completely offline.
-
-        This helper constructs the JSON payload that TRON full-nodes expect for a
-        token transfer **without** talking to any network node. It is therefore
-        suitable for cold-storage and air-gapped signing workflows.
-
-        Parameters
-        ----------
-        from_address : str
-            Base58Check address of the token sender.
-        to_address : str
-            Recipient address (Base58Check or hex).
-        amount : int
-            Amount of tokens to send, expressed in the token's minimal unit
-            (``10**decimals``).
-        contract_address : str
-            Address of the TRC-20 contract whose ``transfer`` method will be
-            invoked.
-        ref_block_id : str
-            Hex string of the *latest solid block id*. The TAPoS fields
-            (``ref_block_bytes``, ``ref_block_hash``, ``timestamp`` and
-            ``expiration``) are derived from this value. The caller must fetch
-            this block id from the network beforehand—typically via
-            ``client.get_latest_block()['blockID']``.
-        fee_limit : int, optional
-            Maximum amount of SUN the transaction is allowed to consume for
-            energy and bandwidth. Defaults to
-            ``tronpy.defaults["fee_limit"]``.
-
-        Returns
-        -------
-        Transaction
-            A :class:`Transaction` instance whose
-            ``raw_data.contract[0].type`` is ``"TriggerSmartContract"``. The
-            object is *unsigned* (``signature`` is an empty list) but its
-            ``txid`` is already computed.
-
-        Examples
-        --------
-        >>> ref_block_id = client.get_latest_block()['blockID']
-        >>> tx = Transaction.build_trc20_transfer_offline(sender, recipient, 1_000_000,
-        ...     contract_addr, ref_block_id)
-        >>> tx.sign(priv_key)
-        >>> client.broadcast(tx)
+        """
+        Constructs an unsigned TRC-20 token transfer transaction offline, invoking the `transfer` method of a smart contract.
+        
+        This method creates a `TriggerSmartContract` transaction payload without any network calls, making it suitable for cold-storage or air-gapped signing workflows. The transaction is unsigned but has its transaction ID precomputed.
+        
+        Parameters:
+            from_address (str): Base58Check address of the token sender.
+            to_address (str): Address of the recipient (Base58Check or hex).
+            amount (int): Amount of tokens to transfer, in the token's minimal unit (10**decimals).
+            contract_address (str): Address of the TRC-20 contract to invoke.
+            ref_block_id (str): Hex string of the latest solid block ID, used to derive TAPoS fields.
+            fee_limit (int, optional): Maximum SUN allowed for energy and bandwidth; defaults to the configured fee limit.
+        
+        Returns:
+            Transaction: An unsigned `Transaction` instance for the TRC-20 transfer, ready for signing and broadcasting.
         """
         return cls.from_json(
             create_smart_contract_transaction_offline(
@@ -371,6 +305,13 @@ class TransactionBuilder:
     """TransactionBuilder, to build a :class:`~Transaction` object."""
 
     def __init__(self, inner: dict, client: "Tron", method: ContractMethod = None):
+        """
+        Initialize a TransactionBuilder with contract data, client, and optional contract method.
+        
+        Parameters:
+            inner (dict): The contract-specific transaction data.
+            method (ContractMethod, optional): The contract method associated with this transaction, if applicable.
+        """
         self._client = client
         self._raw_data = {
             "contract": [inner],
@@ -414,7 +355,12 @@ class TransactionBuilder:
         return self
 
     def build(self, options=None, **kwargs) -> Transaction:
-        """Build the transaction."""
+        """
+        Finalize and construct a Transaction object with current reference block information.
+        
+        Returns:
+            Transaction: The constructed Transaction instance with updated TAPoS fields.
+        """
         ref_block_id = self._client.get_latest_solid_block_id()
         # last 2 byte of block number part
         self._raw_data["ref_block_bytes"] = get_ref_block_bytes(ref_block_id)
@@ -431,6 +377,9 @@ class Trx:
     """The Trx(transaction) API."""
 
     def __init__(self, tron: "Tron") -> None:
+        """
+        Initialize the Trx helper with a reference to the main Tron client.
+        """
         self._tron = tron
 
     @property
@@ -483,9 +432,25 @@ class Trx:
         trx_num: int = 1,
         num: int = 1,
     ) -> TransactionBuilder:
-        """Issue a TRC10 token.
-
-        Almost all parameters have resonable defaults.
+        """
+        Creates a transaction builder for issuing a new TRC10 token with customizable parameters.
+        
+        Parameters:
+            owner (TAddress): The address that will own and issue the token.
+            abbr (str): The token abbreviation (symbol).
+            total_supply (int): The total supply of the token.
+            url (str): The URL associated with the token.
+            name (str, optional): The token name. Defaults to the abbreviation if not provided.
+            description (str, optional): A description for the token.
+            start_time (int, optional): The start time for the token issuance (UNIX timestamp in ms). Defaults to 60 seconds from now.
+            end_time (int, optional): The end time for the token issuance (UNIX timestamp in ms). Defaults to 61 seconds from now.
+            precision (int, optional): The number of decimal places for the token. Defaults to 6.
+            frozen_supply (list, optional): List of frozen supply rules.
+            trx_num (int, optional): The minimum number of TRX to participate. Defaults to 1.
+            num (int, optional): The maximum number of tokens to buy per account. Defaults to 1.
+        
+        Returns:
+            TransactionBuilder: A builder object for further customization and transaction creation.
         """
         if name is None:
             name = abbr

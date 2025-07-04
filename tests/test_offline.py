@@ -7,6 +7,11 @@ from tronpy.tron import Transaction
 
 @freezegun.freeze_time(datetime.datetime(2025, 7, 2, 14, 27, 12, 131000, tzinfo=datetime.timezone.utc))
 def test_create_transaction_offline() -> None:
+    """
+    Test that an offline TRX transfer transaction is constructed correctly with deterministic fields.
+    
+    Verifies that building a standard transfer transaction offline using fixed parameters and a frozen timestamp produces the expected serialized transaction JSON.
+    """
     owner_address = "TSJAbe7YTH6xfFiZHkv5bzXTQ5uDqz9eW8"
     to_address = "TQGjrFjwuXuQu7ZhxcVeqpDVxFZt9RgzUs"
     amount = 1_000_000
@@ -47,6 +52,9 @@ def test_create_transaction_offline() -> None:
 
 @freezegun.freeze_time(datetime.datetime(2025, 7, 3, 14, 50, 32, 807000, tzinfo=datetime.timezone.utc))
 def test_create_smart_contract_transaction_offline() -> None:
+    """
+    Test offline creation of a TRC20 token transfer transaction and verify its serialized JSON output matches the expected structure.
+    """
     contract_address = "TGaVEQQABuvKMbmThCsS9w27J4K5MuMJCF"
     owner_address = "TSJAbe7YTH6xfFiZHkv5bzXTQ5uDqz9eW8"
     address_to = "TQGjrFjwuXuQu7ZhxcVeqpDVxFZt9RgzUs"

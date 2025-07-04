@@ -38,4 +38,13 @@ SIXTY_SECONDS: typing.Final[int] = 60_000
 
 
 def conf_for_name(name: str) -> dict:
+    """
+    Return the configuration dictionary for the specified Tron network name.
+    
+    Parameters:
+        name (str): The name of the Tron network (e.g., "mainnet", "shasta", "nile", "tronex").
+    
+    Returns:
+        dict or None: The configuration dictionary for the given network name, or None if not found.
+    """
     return ALL.get(name, None)
